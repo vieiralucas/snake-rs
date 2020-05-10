@@ -135,8 +135,6 @@ impl Game {
             _ => {}
         };
 
-        write!(stderr(), "{:#?}", self.apple);
-
         if self.snake.head == self.apple {
             self.spawn_apple();
         }
