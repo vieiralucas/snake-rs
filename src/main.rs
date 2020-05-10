@@ -5,14 +5,33 @@ use std::time::Duration;
 use termion::async_stdin;
 use termion::raw::IntoRawMode;
 
-#[derive(Clone, Copy)]
 struct Vec2 {
     x: i16,
     y: i16,
 }
 
 impl Vec2 {
-    fn add(self, vec: Vec2) -> Self {
+    fn new(x: i16, y: i16) -> Self {
+        Self { x: x, y: y }
+    }
+
+    fn left() -> Self {
+        Self::new(-1, 0)
+    }
+
+    fn down() -> Self {
+        Self::new(0, 1)
+    }
+
+    fn up() -> Self {
+        Self::new(0, -1)
+    }
+
+    fn right() -> Self {
+        Self::new(1, 0)
+    }
+
+    fn add(&self, vec: &Vec2) -> Self {
         Vec2 {
             x: self.x + vec.x,
             y: self.y + vec.y,
@@ -20,7 +39,6 @@ impl Vec2 {
     }
 }
 
-#[derive(Clone, Copy)]
 struct Snake {
     dir: Vec2,
     head: Vec2,
@@ -34,55 +52,32 @@ impl Snake {
         }
     }
 
-    fn go_left(self) -> Self {
-        if self.dir.x == 1 {
-            return self;
-        }
-
-        Self {
-            head: self.head,
-            dir: Vec2 { x: -1, y: 0 },
+    fn go_left(&mut self) {
+        if self.dir.x != 1 {
+            self.dir = Vec2::left();
         }
     }
 
-    fn go_up(self) -> Self {
-        if self.dir.y == 1 {
-            return self;
-        }
-
-        Self {
-            head: self.head,
-            dir: Vec2 { x: 0, y: -1 },
+    fn go_up(&mut self) {
+        if self.dir.y != -1 {
+            self.dir = Vec2::up();
         }
     }
 
-    fn go_down(self) -> Self {
-        if self.dir.y == -1 {
-            return self;
-        }
-
-        Self {
-            head: self.head,
-            dir: Vec2 { x: 0, y: 1 },
+    fn go_down(&mut self) {
+        if self.dir.y != 1 {
+            self.dir = Vec2::down();
         }
     }
 
-    fn go_right(self) -> Self {
-        if self.dir.x == -1 {
-            return self;
-        }
-
-        Self {
-            head: self.head,
-            dir: Vec2 { x: 1, y: 0 },
+    fn go_right(&mut self) {
+        if self.dir.x != -1 {
+            self.dir = Vec2::right();
         }
     }
 
-    fn update(self) -> Self {
-        Self {
-            head: self.head.add(self.dir),
-            dir: self.dir,
-        }
+    fn update(&mut self) {
+        self.head = self.head.add(&self.dir);
     }
 }
 
@@ -100,10 +95,10 @@ fn main() {
         let b = stdin.next();
         match b {
             Some(Ok(b'q')) => break,
-            Some(Ok(b'h')) => snake = snake.go_left(),
-            Some(Ok(b'j')) => snake = snake.go_down(),
-            Some(Ok(b'k')) => snake = snake.go_up(),
-            Some(Ok(b'l')) => snake = snake.go_right(),
+            Some(Ok(b'h')) => snake.go_left(),
+            Some(Ok(b'j')) => snake.go_down(),
+            Some(Ok(b'k')) => snake.go_up(),
+            Some(Ok(b'l')) => snake.go_right(),
             _ => {}
         };
 
@@ -120,7 +115,7 @@ fn main() {
         stdout.flush().unwrap();
         thread::sleep(Duration::from_millis(500));
 
-        snake = snake.update();
+        snake.update();
     }
     write!(
         stdout,
