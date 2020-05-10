@@ -1,6 +1,7 @@
 use rand::Rng;
 use std::convert::TryInto;
 use std::io::{stdout, Read, Write};
+use std::ops;
 use std::thread;
 use std::time::Duration;
 use termion::async_stdin;
@@ -55,6 +56,17 @@ impl Vec2 {
             (Some(x), Some(y)) => write!(w, "{}██", termion::cursor::Goto(x + 1, y + 1))
                 .expect("could not render pixel"),
             _ => {}
+        }
+    }
+}
+
+impl ops::Mul<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn mul(self, rhs: Vec2) -> Self {
+        Self {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
         }
     }
 }
@@ -116,14 +128,14 @@ impl Game {
     fn new(w: u16, h: u16) -> Self {
         Self {
             snake: Snake::new(),
-            apple: Vec2::random(Vec2::new(0, 0), Vec2::new(w as i16, h as i16)),
+            apple: Game::spawn_apple(w, h),
             w: w,
             h: h,
         }
     }
 
-    fn spawn_apple(&mut self) {
-        self.apple = Vec2::random(Vec2::new(0, 0), Vec2::new(self.w as i16, self.h as i16));
+    fn spawn_apple(w: u16, h: u16) -> Vec2 {
+        Vec2::random(Vec2::new(2, 1), Vec2::new((w as i16 - 2) / 2, h as i16 - 1)) * Vec2::new(2, 1)
     }
 
     fn update(&mut self, input: Option<char>) {
@@ -136,7 +148,7 @@ impl Game {
         };
 
         if self.snake.head == self.apple {
-            self.spawn_apple();
+            self.apple = Game::spawn_apple(self.w, self.h);
         }
 
         self.snake.update();
