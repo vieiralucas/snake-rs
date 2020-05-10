@@ -1,6 +1,6 @@
 use rand::Rng;
 use std::convert::TryInto;
-use std::io::{stderr, stdout, Read, Write};
+use std::io::{stdout, Read, Write};
 use std::thread;
 use std::time::Duration;
 use termion::async_stdin;
@@ -134,8 +134,6 @@ impl Game {
             Some('l') => self.snake.go_right(),
             _ => {}
         };
-
-        write!(stderr(), "{:#?}", self.apple);
 
         if self.snake.head == self.apple {
             self.spawn_apple();
