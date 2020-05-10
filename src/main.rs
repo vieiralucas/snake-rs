@@ -156,7 +156,7 @@ impl Game {
 
     fn render(&self, w: &mut dyn Write) {
         write!(w, "{}", termion::clear::All).expect("could not clear screen");
-        for x in 0..self.w {
+        for x in (0..self.w).step_by(2) {
             write!(w, "{}██", termion::cursor::Goto(x + 1, 1))
                 .expect("could not render border pixel");
             write!(w, "{}██", termion::cursor::Goto(x + 1, self.h - 1))
