@@ -260,22 +260,24 @@ impl Game {
         self.apple.render(w);
 
         match self.game_over {
-            Some((pos, blink)) => {
-                if (blink) {
-                    write!(
-                        w,
-                        "{}{}",
-                        termion::color::Fg(termion::color::Black),
-                        termion::color::Bg(termion::color::White),
-                    );
-                } else {
-                    write!(
-                        w,
-                        "{}{}",
-                        termion::color::Fg(termion::color::White),
-                        termion::color::Bg(termion::color::Black),
-                    );
-                }
+            Some((pos, false)) => {
+                write!(
+                    w,
+                    "{}{}",
+                    termion::color::Fg(termion::color::White),
+                    termion::color::Bg(termion::color::Black),
+                )
+                .expect("could not set colors for rendering collision");
+                pos.render(w);
+            }
+            Some((pos, true)) => {
+                write!(
+                    w,
+                    "{}{}",
+                    termion::color::Fg(termion::color::Black),
+                    termion::color::Bg(termion::color::White),
+                )
+                .expect("could not set colors for rendering collision");
                 pos.render(w);
             }
             _ => {}
