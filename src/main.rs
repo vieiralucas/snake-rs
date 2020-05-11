@@ -194,7 +194,19 @@ impl Game {
             return true;
         }
 
-        return false;
+        false
+    }
+
+    fn snake_hits_itself(&self) -> bool {
+        let future_head = self.snake.head + self.snake.dir;
+
+        for t in self.snake.tail.iter() {
+            if t == &future_head {
+                return true;
+            }
+        }
+
+        false
     }
 
     fn update(&mut self, input: Option<char>) {
@@ -208,7 +220,7 @@ impl Game {
             };
         }
 
-        self.game_over = self.snake_hits_walls();
+        self.game_over = self.snake_hits_walls() || self.snake_hits_itself();
         if self.game_over {
             return;
         }
