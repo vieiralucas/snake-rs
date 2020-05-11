@@ -310,7 +310,7 @@ fn main() {
 
     let (w, h) = terminal_size().expect("could not get terminal size");
 
-    let mut game = Game::new(u16::min(100, w), u16::min(100, h));
+    let mut game = Game::new(u16::min(200, w), u16::min(100, h));
 
     loop {
         let input = stdin.next().and_then(|res| res.ok()).map(|b| b as char);
