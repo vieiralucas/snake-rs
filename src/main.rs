@@ -46,7 +46,7 @@ impl Vec2 {
         let y: Option<u16> = (self.y).try_into().ok();
 
         match (x, y) {
-            (Some(x), Some(y)) => write!(w, "{}██", termion::cursor::Goto(x + 1, y + 1))
+            (Some(x), Some(y)) => write!(w, "{}  ", termion::cursor::Goto(x + 1, y + 1))
                 .expect("could not render pixel"),
             _ => {}
         }
@@ -235,20 +235,33 @@ impl Game {
 
     fn render(&self, w: &mut dyn Write) {
         write!(w, "{}", termion::clear::All).expect("could not clear screen");
+        write!(w, "{}", termion::color::Bg(termion::color::White))
+            .expect("could not set background color");
         for x in (0..self.w).step_by(2) {
-            write!(w, "{}██", termion::cursor::Goto(x + 1, 1))
+            write!(w, "{}  ", termion::cursor::Goto(x + 1, 1))
                 .expect("could not render border pixel");
-            write!(w, "{}██", termion::cursor::Goto(x + 1, self.h))
+            write!(w, "{}  ", termion::cursor::Goto(x + 1, self.h))
                 .expect("could not render border pixel");
         }
         for y in 0..self.h {
-            write!(w, "{}██", termion::cursor::Goto(1, y)).expect("could not render border pixel");
-            write!(w, "{}██", termion::cursor::Goto(self.w - 1, y))
+            write!(w, "{}  ", termion::cursor::Goto(1, y)).expect("could not render border pixel");
+            write!(w, "{}  ", termion::cursor::Goto(self.w - 1, y))
                 .expect("could not render border pixel");
         }
 
         self.snake.render(w);
         self.apple.render(w);
+
+        write!(
+            w,
+            "{}{}{}q to quit, hjkl to move{}{}",
+            termion::cursor::Goto(4, self.h),
+            termion::color::Fg(termion::color::Black),
+            termion::color::Bg(termion::color::White),
+            termion::color::Fg(termion::color::Reset),
+            termion::color::Bg(termion::color::Reset),
+        )
+        .expect("could not render instructions");
 
         w.flush().expect("could not flush renderer");
     }
@@ -281,7 +294,9 @@ fn main() {
     }
     write!(
         stdout,
-        "{}{}{}",
+        "{}{}{}{}{}",
+        termion::color::Fg(termion::color::Reset),
+        termion::color::Bg(termion::color::Reset),
         termion::clear::All,
         termion::cursor::Goto(1, 1),
         termion::cursor::Show
