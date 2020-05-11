@@ -8,7 +8,7 @@ use termion::async_stdin;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 struct Vec2 {
     x: i16,
     y: i16,
@@ -41,13 +41,6 @@ impl Vec2 {
         Self::new(2, 0)
     }
 
-    fn add(&self, vec: &Vec2) -> Self {
-        Vec2 {
-            x: self.x + vec.x,
-            y: self.y + vec.y,
-        }
-    }
-
     fn render(&self, w: &mut dyn Write) {
         let x: Option<u16> = (self.x).try_into().ok();
         let y: Option<u16> = (self.y).try_into().ok();
@@ -56,6 +49,24 @@ impl Vec2 {
             (Some(x), Some(y)) => write!(w, "{}██", termion::cursor::Goto(x + 1, y + 1))
                 .expect("could not render pixel"),
             _ => {}
+        }
+    }
+}
+
+impl ops::AddAssign<Vec2> for Vec2 {
+    fn add_assign(&mut self, rhs: Vec2) {
+        self.x += rhs.x;
+        self.y += rhs.y;
+    }
+}
+
+impl ops::Add<Vec2> for Vec2 {
+    type Output = Vec2;
+
+    fn add(self, rhs: Vec2) -> Self {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
         }
     }
 }
@@ -71,9 +82,11 @@ impl ops::Mul<Vec2> for Vec2 {
     }
 }
 
+#[derive(Debug)]
 struct Snake {
     dir: Vec2,
     head: Vec2,
+    tail: Vec<Vec2>,
 }
 
 impl Snake {
@@ -81,39 +94,69 @@ impl Snake {
         Self {
             head: Vec2 { x: 2, y: 1 },
             dir: Vec2::right(),
+            tail: vec![],
         }
     }
 
     fn go_left(&mut self) {
-        if self.dir.x != 1 {
+        if self.dir != Vec2::right() {
             self.dir = Vec2::left();
         }
     }
 
     fn go_up(&mut self) {
-        if self.dir.y != -1 {
+        if self.dir != Vec2::down() {
             self.dir = Vec2::up();
         }
     }
 
     fn go_down(&mut self) {
-        if self.dir.y != 1 {
+        if self.dir != Vec2::up() {
             self.dir = Vec2::down();
         }
     }
 
     fn go_right(&mut self) {
-        if self.dir.x != -1 {
+        if self.dir != Vec2::left() {
             self.dir = Vec2::right();
         }
     }
 
     fn update(&mut self) {
-        self.head = self.head.add(&self.dir);
+        for i in (0..self.tail.len()).rev() {
+            let mut prev = self.head;
+            if i > 0 {
+                prev = self.tail[i - 1];
+            }
+
+            self.tail[i].x = prev.x;
+            self.tail[i].y = prev.y;
+        }
+        self.head += self.dir;
+    }
+
+    fn grow(&mut self) {
+        let mut last_part = self.head;
+        if self.tail.len() > 0 {
+            last_part = self.tail[self.tail.len() - 1]
+        }
+
+        if self.dir == Vec2::left() {
+            self.tail.push(last_part + Vec2::right())
+        } else if self.dir == Vec2::down() {
+            self.tail.push(last_part + Vec2::up())
+        } else if self.dir == Vec2::up() {
+            self.tail.push(last_part + Vec2::down())
+        } else if self.dir == Vec2::right() {
+            self.tail.push(last_part + Vec2::left())
+        }
     }
 
     fn render(&self, w: &mut dyn Write) {
         self.head.render(w);
+        for t in self.tail.iter() {
+            t.render(w);
+        }
     }
 }
 
@@ -148,6 +191,7 @@ impl Game {
         };
 
         if self.snake.head == self.apple {
+            self.snake.grow();
             self.apple = Game::spawn_apple(self.w, self.h);
         }
 
