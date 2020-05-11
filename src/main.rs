@@ -165,6 +165,7 @@ struct Game {
     apple: Vec2,
     w: u16,
     h: u16,
+    game_over: bool,
 }
 
 impl Game {
@@ -174,6 +175,7 @@ impl Game {
             apple: Game::spawn_apple(w, h),
             w: w,
             h: h,
+            game_over: false,
         }
     }
 
@@ -181,14 +183,35 @@ impl Game {
         Vec2::random(Vec2::new(2, 1), Vec2::new((w as i16 - 2) / 2, h as i16 - 1)) * Vec2::new(2, 1)
     }
 
+    fn snake_hits_walls(&self) -> bool {
+        let future_head = self.snake.head + self.snake.dir;
+
+        if future_head.x == 0 || future_head.x == (self.w - 2) as i16 {
+            return true;
+        }
+
+        if future_head.y == 0 || future_head.y == (self.h - 1) as i16 {
+            return true;
+        }
+
+        return false;
+    }
+
     fn update(&mut self, input: Option<char>) {
-        match input {
-            Some('h') => self.snake.go_left(),
-            Some('j') => self.snake.go_down(),
-            Some('k') => self.snake.go_up(),
-            Some('l') => self.snake.go_right(),
-            _ => {}
-        };
+        if !self.game_over {
+            match input {
+                Some('h') => self.snake.go_left(),
+                Some('j') => self.snake.go_down(),
+                Some('k') => self.snake.go_up(),
+                Some('l') => self.snake.go_right(),
+                _ => {}
+            };
+        }
+
+        self.game_over = self.snake_hits_walls();
+        if self.game_over {
+            return;
+        }
 
         if self.snake.head == self.apple {
             self.snake.grow();
@@ -203,7 +226,7 @@ impl Game {
         for x in (0..self.w).step_by(2) {
             write!(w, "{}██", termion::cursor::Goto(x + 1, 1))
                 .expect("could not render border pixel");
-            write!(w, "{}██", termion::cursor::Goto(x + 1, self.h - 1))
+            write!(w, "{}██", termion::cursor::Goto(x + 1, self.h))
                 .expect("could not render border pixel");
         }
         for y in 0..self.h {
