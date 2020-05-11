@@ -165,7 +165,7 @@ struct Game {
     apple: Vec2,
     w: u16,
     h: u16,
-    game_over: bool,
+    game_over: Option<(Vec2, bool)>,
 }
 
 impl Game {
@@ -175,7 +175,7 @@ impl Game {
             apple: Game::spawn_apple(w, h),
             w: w,
             h: h,
-            game_over: false,
+            game_over: None,
         }
     }
 
@@ -183,34 +183,34 @@ impl Game {
         Vec2::random(Vec2::new(2, 1), Vec2::new((w as i16 - 2) / 2, h as i16 - 1)) * Vec2::new(2, 1)
     }
 
-    fn snake_hits_walls(&self) -> bool {
+    fn snake_hits_walls(&self) -> Option<Vec2> {
         let future_head = self.snake.head + self.snake.dir;
 
         if future_head.x == 0 || future_head.x == (self.w - 2) as i16 {
-            return true;
+            return Some(future_head);
         }
 
         if future_head.y == 0 || future_head.y == (self.h - 1) as i16 {
-            return true;
+            return Some(future_head);
         }
 
-        false
+        None
     }
 
-    fn snake_hits_itself(&self) -> bool {
+    fn snake_hits_itself(&self) -> Option<Vec2> {
         let future_head = self.snake.head + self.snake.dir;
 
         for t in self.snake.tail.iter() {
             if t == &future_head {
-                return true;
+                return Some(future_head);
             }
         }
 
-        false
+        None
     }
 
     fn update(&mut self, input: Option<char>) {
-        if !self.game_over {
+        if self.game_over.is_none() {
             match input {
                 Some('h') => self.snake.go_left(),
                 Some('j') => self.snake.go_down(),
@@ -220,8 +220,15 @@ impl Game {
             };
         }
 
-        self.game_over = self.snake_hits_walls() || self.snake_hits_itself();
-        if self.game_over {
+        if self.game_over.is_none() {
+            self.game_over = self
+                .snake_hits_walls()
+                .or(self.snake_hits_itself())
+                .map(|pos| (pos, false));
+        }
+
+        if self.game_over.is_some() {
+            self.game_over = self.game_over.map(|(pos, blink)| (pos, !blink));
             return;
         }
 
@@ -251,6 +258,28 @@ impl Game {
 
         self.snake.render(w);
         self.apple.render(w);
+
+        match self.game_over {
+            Some((pos, blink)) => {
+                if (blink) {
+                    write!(
+                        w,
+                        "{}{}",
+                        termion::color::Fg(termion::color::Black),
+                        termion::color::Bg(termion::color::White),
+                    );
+                } else {
+                    write!(
+                        w,
+                        "{}{}",
+                        termion::color::Fg(termion::color::White),
+                        termion::color::Bg(termion::color::Black),
+                    );
+                }
+                pos.render(w);
+            }
+            _ => {}
+        }
 
         write!(
             w,
