@@ -99,25 +99,25 @@ impl Snake {
     }
 
     fn go_left(&mut self) {
-        if self.dir.x != 1 {
+        if self.dir != Vec2::right() {
             self.dir = Vec2::left();
         }
     }
 
     fn go_up(&mut self) {
-        if self.dir.y != -1 {
+        if self.dir != Vec2::down() {
             self.dir = Vec2::up();
         }
     }
 
     fn go_down(&mut self) {
-        if self.dir.y != 1 {
+        if self.dir != Vec2::up() {
             self.dir = Vec2::down();
         }
     }
 
     fn go_right(&mut self) {
-        if self.dir.x != -1 {
+        if self.dir != Vec2::left() {
             self.dir = Vec2::right();
         }
     }
